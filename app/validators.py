@@ -16,3 +16,11 @@ class CreateUserResponse(BaseModel):
     id: int
     username: str
     created_at: str
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    message: str
+    token: str
