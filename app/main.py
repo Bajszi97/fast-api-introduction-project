@@ -28,11 +28,7 @@ async def register(user: CreateUserRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return UserOut(
-        id=new_user.id,
-        username=new_user.username,
-        created_at=new_user.created_at.isoformat(),
-    )
+    return new_user
 
 
 @app.post("/login", response_model=LoginResponse)
@@ -68,11 +64,4 @@ async def create_project(
     db.commit()
     db.refresh(new_project)
 
-    return ProjectOut(
-        id=new_project.id,
-        owner_id=new_project.owner_id,
-        name=new_project.name,
-        description=new_project.description,
-        created_at=new_project.created_at.isoformat(),
-        updated_at=new_project.updated_at.isoformat()
-    )
+    return new_project
