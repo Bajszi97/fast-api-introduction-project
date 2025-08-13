@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db import get_db
-from validators import CreateUserRequest, CreateUserResponse, LoginResponse, LoginRequest, CreateProjectResponse, CreateProjectRequest
+from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest
 from models import User, Project
 from services.auth import hash_password, verify_password, get_current_user
 
@@ -9,7 +9,7 @@ from services.auth import hash_password, verify_password, get_current_user
 app = FastAPI()
 
 
-@app.post("/auth", response_model=CreateUserResponse)
+@app.post("/auth", response_model=UserOut)
 async def register(user: CreateUserRequest, db: Session = Depends(get_db)):
     # check if username exists
     existing_user = db.query(User).filter(User.username == user.username).first()
@@ -28,7 +28,7 @@ async def register(user: CreateUserRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return CreateUserResponse(
+    return UserOut(
         id=new_user.id,
         username=new_user.username,
         created_at=new_user.created_at.isoformat(),
@@ -52,7 +52,7 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/projects", response_model=CreateProjectResponse)
+@app.post("/projects", response_model=ProjectOut)
 async def create_project(
     project: CreateProjectRequest,
     current_user: User = Depends(get_current_user),
@@ -68,7 +68,7 @@ async def create_project(
     db.commit()
     db.refresh(new_project)
 
-    return CreateProjectResponse(
+    return ProjectOut(
         id=new_project.id,
         owner_id=new_project.owner_id,
         name=new_project.name,

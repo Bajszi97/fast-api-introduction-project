@@ -14,7 +14,7 @@ class CreateUserRequest(BaseModel):
         return self
 
 
-class CreateUserResponse(BaseModel):
+class UserOut(BaseModel):
     id: int
     username: str
     created_at: str
@@ -35,7 +35,7 @@ class CreateProjectRequest(BaseModel):
     description: Optional[str] = None
 
 
-class CreateProjectResponse(BaseModel):
+class ProjectOut(BaseModel):
     id: int
     owner_id: int
     name: str
