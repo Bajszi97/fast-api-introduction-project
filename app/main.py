@@ -4,6 +4,7 @@ from db import get_db
 from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest
 from models import User, Project
 from services.auth import hash_password, verify_password, get_current_user
+from typing import List
 
 
 app = FastAPI()
@@ -65,3 +66,12 @@ async def create_project(
     db.refresh(new_project)
 
     return new_project
+
+@app.get("/projects", response_model=List[ProjectOut])
+async def list_projects(   
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    projects = db.query(Project).filter(Project.owner == current_user).all()    
+    return projects
+    
