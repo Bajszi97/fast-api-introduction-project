@@ -41,7 +41,6 @@ class CreateProjectRequest(BaseModel):
 
 class ProjectOut(BaseModel):
     id: int
-    owner_id: int
     name: str
     description: Optional[str] = None
     created_at: datetime

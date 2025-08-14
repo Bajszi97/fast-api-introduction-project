@@ -2,7 +2,8 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db import get_db
 from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest
-from models import User, Project
+from models import User, Project, UserProject
+from models.enums import Role
 from services.auth import hash_password, verify_password, get_current_user
 from typing import List
 
@@ -57,13 +58,21 @@ async def create_project(
 ):
     # create new Project
     new_project = Project(
-        owner_id=current_user.id,
         name=project.name,
         description=project.description,
     )
     db.add(new_project)
+    db.flush()
+
+    # associate with admin
+    admin_assoc = UserProject(
+        user_id=current_user.id,
+        project_id=new_project.id,
+        role=Role.admin
+    )
+
+    db.add(admin_assoc)
     db.commit()
-    db.refresh(new_project)
 
     return new_project
 
@@ -71,7 +80,6 @@ async def create_project(
 async def list_projects(   
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-):
-    projects = db.query(Project).filter(Project.owner == current_user).all()    
-    return projects
+):   
+    return current_user.projects
     

@@ -22,7 +22,6 @@ def upgrade() -> None:
     op.create_table(
         'projects',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('owner_id', sa.Integer, sa.ForeignKey('users.id'), nullable=False),
         sa.Column('name', sa.String(128), nullable=False),
         sa.Column('description', sa.Text, nullable=True),
         sa.Column('created_at', sa.TIMESTAMP(timezone=False), server_default=sa.func.now(), nullable=False),
