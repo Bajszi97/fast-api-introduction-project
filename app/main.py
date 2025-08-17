@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from db import get_db
 from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
@@ -269,3 +270,65 @@ async def list_project_documents(
         )
     
     return project.documents
+
+
+@app.get("/projects/{project_id}/documents/{document_id}", response_model=ProjectDocumentOut)
+async def get_project_document(
+    project_id: int,
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this project's documents"
+        )
+    
+    document = db.query(Document).filter(Document.id == document_id, Document.project_id == project_id).first()
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project's document not found"
+        )
+    
+    return document
+
+
+@app.get("/projects/{project_id}/documents/{document_id}/download")
+async def download_project_document(
+    project_id: int,
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this project's documents"
+        )
+    
+    document = db.query(Document).filter(Document.id == document_id, Document.project_id == project_id).first()
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project's document not found"
+        )
+    
+    return FileResponse(
+        path=document.path,
+        filename=document.filename,
+        media_type=document.file_type
+    )
