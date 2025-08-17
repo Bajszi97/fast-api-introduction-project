@@ -19,7 +19,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     projects: Mapped[List["Project"]] = relationship(back_populates="users")
 
-    projects_assoc: Mapped[list["UserProject"]] = relationship(back_populates="user")
+    projects_assoc: Mapped[list["UserProject"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     projects: Mapped[list["Project"]] = relationship(
         secondary="user_project",

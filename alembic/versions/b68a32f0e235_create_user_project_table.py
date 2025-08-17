@@ -21,8 +21,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade():
     op.create_table(
         'user_project',
-        sa.Column('user_id', sa.Integer, sa.ForeignKey('users.id'), primary_key=True, nullable=False),
-        sa.Column('project_id', sa.Integer, sa.ForeignKey('projects.id'), primary_key=True, nullable=False),
+        sa.Column('user_id', sa.Integer, sa.ForeignKey('users.id', ondelete="CASCADE"), primary_key=True, nullable=False),
+        sa.Column('project_id', sa.Integer, sa.ForeignKey('projects.id', ondelete="CASCADE"), primary_key=True, nullable=False),
         sa.Column('role', sa.String(length=32), nullable=False),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.func.now(), nullable=False),
         sa.CheckConstraint("role IN ('admin', 'participant')", name='ck_user_project_role')
