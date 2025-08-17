@@ -7,7 +7,7 @@ from typing import List
 from models.enums import Role
 
 if typing.TYPE_CHECKING:
-    from models import User, UserProject
+    from models import User, UserProject, Document
 
 
 class Project(Base):
@@ -19,6 +19,7 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
+    documents: Mapped[List["Document"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     users_assoc: Mapped[List["UserProject"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
     users: Mapped[List["User"]] = relationship(
