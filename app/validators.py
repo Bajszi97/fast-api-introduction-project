@@ -48,3 +48,6 @@ class ProjectOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AddParticipantRequest(BaseModel):
+    user_id: int

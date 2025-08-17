@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db import get_db
-from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest
+from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest
 from models import User, Project, UserProject
 from models.enums import Role
 from services.auth import hash_password, verify_password, get_current_user
@@ -154,3 +154,50 @@ async def delete_project(
 
     db.delete(project)
     db.commit()
+
+
+@app.post("/projects/{project_id}/participants", status_code=status.HTTP_201_CREATED)
+async def add_participant(
+    project_id: int,
+    participant: AddParticipantRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.admins:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to add participants"
+        )
+
+    user = db.query(User).filter(User.id == participant.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    existing_assoc = db.query(UserProject).filter(
+        UserProject.user_id == user.id,
+        UserProject.project_id == project.id
+    ).first()
+    if existing_assoc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already a participant"
+        )
+
+    new_assoc = UserProject(
+        user_id=user.id,
+        project_id=project.id,
+        role=Role.participant
+    )
+    db.add(new_assoc)
+    db.commit()
+    
+    return {"message": "Participant added successfully"}
