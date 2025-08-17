@@ -14,7 +14,8 @@ app = FastAPI()
 @app.post("/auth", response_model=UserOut)
 async def register(user: CreateUserRequest, db: Session = Depends(get_db)):
     # check if username exists
-    existing_user = db.query(User).filter(User.username == user.username).first()
+    existing_user = db.query(User).filter(
+        User.username == user.username).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -76,11 +77,12 @@ async def create_project(
 
     return new_project
 
+
 @app.get("/projects", response_model=List[ProjectOut])
-async def list_projects(   
+async def list_projects(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-):   
+):
     return current_user.projects
 
 
@@ -131,6 +133,7 @@ async def update_project(
 
     return project
 
+
 @app.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
     project_id: int,
@@ -148,7 +151,6 @@ async def delete_project(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to delete this project"
         )
-    
+
     db.delete(project)
     db.commit()
-    
