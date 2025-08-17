@@ -49,5 +49,15 @@ class ProjectOut(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AddParticipantRequest(BaseModel):
     user_id: int
+
+
+class ProjectDocumentOut(BaseModel):
+    id: int
+    project_id: int
+    filename: str
+    file_type: str
+    created_at: datetime
+    url:  str

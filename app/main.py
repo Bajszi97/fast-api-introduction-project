@@ -1,11 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+import os
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from sqlalchemy.orm import Session
 from db import get_db
-from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest
-from models import User, Project, UserProject
+from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
+from models import User, Project, UserProject, Document
 from models.enums import Role
 from services.auth import hash_password, verify_password, get_current_user
 from typing import List
+from pathlib import Path
 
 
 app = FastAPI()
@@ -201,3 +203,47 @@ async def add_participant(
     db.commit()
     
     return {"message": "Participant added successfully"}
+
+
+@app.post("/porjects/{project_id}/documents", status_code=status.HTTP_201_CREATED, response_model=ProjectDocumentOut)
+async def upload_project_file(
+    project_id: int,
+    file: UploadFile,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to upload documents to this project"
+        )
+    
+    existing_file = db.query(Document).filter(Document.project_id == project.id, Document.filename == file.filename).first()
+    if existing_file:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This project already has a document with this name"
+        )
+
+    new_document = Document(
+        project_id=project.id,
+        filename=file.filename,
+        file_type=file.content_type 
+    )
+
+    db.add(new_document)
+    db.commit()
+    db.refresh(new_document)
+
+    os.makedirs(Document.STORAGE_PATH.format(project_id=project.id), exist_ok=True)
+    
+    with open(new_document.path, "wb") as buffer:
+        buffer.write(await file.read())
+
+    return new_document
