@@ -82,4 +82,23 @@ async def list_projects(
     db: Session = Depends(get_db)
 ):   
     return current_user.projects
-    
+
+
+@app.get("/projects/{project_id}", response_model=ProjectOut)
+async def get_project(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this project"
+        )
+    return project
