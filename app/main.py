@@ -247,3 +247,25 @@ async def upload_project_file(
         buffer.write(await file.read())
 
     return new_document
+
+
+
+@app.get("/projects/{project_id}/documents", response_model=List[ProjectDocumentOut])
+async def list_project_documents(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this project's documents"
+        )
+    
+    return project.documents
