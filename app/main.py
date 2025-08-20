@@ -375,3 +375,38 @@ async def update_project_document(
         buffer.write(await file.read())
     
     return document
+
+
+@app.delete("/projects/{project_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project_document(
+    project_id: int,
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    if current_user not in project.users:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this project's documents"
+        )
+    
+    document = db.query(Document).filter(Document.id == document_id, Document.project_id == project_id).first()
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project's document not found"
+        )
+
+    try:
+        os.remove(document.path)
+    except FileNotFoundError:
+        pass 
+
+    db.delete(document)
+    db.commit()
