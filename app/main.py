@@ -1,40 +1,27 @@
 import os
+from dependencies import get_user_service
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
+from services import UserService
 from sqlalchemy.orm import Session
 from db import get_db
 from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
 from models import User, Project, UserProject, Document
 from models.enums import Role
-from services.auth import hash_password, verify_password, get_current_user
+from services.auth import verify_password, get_current_user
 from typing import List
-from pathlib import Path
 
 
 app = FastAPI()
 
 
-@app.post("/auth", response_model=UserOut)
-async def register(user: CreateUserRequest, db: Session = Depends(get_db)):
-    # check if username exists
-    existing_user = db.query(User).filter(
-        User.username == user.username).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists"
-        )
+@app.post("/auth", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+async def register(user: CreateUserRequest, service: UserService = Depends(get_user_service)):
+    try:
+        return service.register_user(user)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    # create new User
-    new_user = User(
-        username=user.username,
-        password=hash_password(user.password),
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return new_user
 
 
 @app.post("/login", response_model=LoginResponse)
