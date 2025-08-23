@@ -10,6 +10,9 @@ def get_user_service(db: Session = Depends(get_db)):
     repo = UserRepository(db)
     return UserService(repo)
 
+def get_auth_service(db: Session = Depends(get_db)):
+    repo = UserRepository(db)
+    return AuthService(repo)
 
 def get_current_user(
     token: str = Header(...),

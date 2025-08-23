@@ -1,5 +1,5 @@
 import os
-from dependencies import get_user_service, get_current_user
+from dependencies import get_user_service, get_current_user, get_auth_service
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from services import UserService
@@ -23,22 +23,19 @@ async def register(user: CreateUserRequest, service: UserService = Depends(get_u
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-
 @app.post("/login", response_model=LoginResponse)
-async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
-    # authenticate user
-    user = db.query(User).filter(User.username == credentials.username).first()
-    if not user or not AuthService.verify_password(credentials.password, user.password):
+async def login(credentials: LoginRequest, service: AuthService = Depends(get_auth_service)):
+    try:
+        token = service.login_user(credentials)
+        return LoginResponse(
+            message="Login was succesful",
+            token=token,
+        )
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
+            detail=str(e)
         )
-
-    token = f"login-token-{user.username}"
-    return LoginResponse(
-        message="Login was succesful",
-        token=token,
-    )
 
 
 @app.post("/projects", response_model=ProjectOut)

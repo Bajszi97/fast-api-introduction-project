@@ -1,11 +1,19 @@
 import bcrypt
 from repositories import UserRepository
 from models import User
+from validators import LoginRequest
 
 
 class AuthService:
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
+
+    def login_user(self, credentials: LoginRequest) -> str:
+        user = self.user_repo.get_by_username(credentials.username)
+        if not user or not AuthService.verify_password(credentials.password, user.password):
+            raise ValueError("Invalid username or password")
+
+        return f"login-token-{user.username}"
 
     def get_current_user(self, token: str) -> User:
         username = self.verify_token(token)
