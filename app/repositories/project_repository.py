@@ -1,3 +1,4 @@
+from typing import List
 from models import Project, UserProject, User
 from models.enums import Role
 from sqlalchemy.orm import Session
@@ -27,4 +28,7 @@ class ProjectRepository:
         self.db.commit()
 
         return new_project
+    
+    def get_user_projects(self, user: User) -> List[Project]:
+        return user.projects
 

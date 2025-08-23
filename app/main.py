@@ -50,9 +50,9 @@ async def create_project(
 @app.get("/projects", response_model=List[ProjectOut])
 async def list_projects(
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    project_service: ProjectService = Depends(get_project_service)
 ):
-    return current_user.projects
+    return project_service.get_user_projects(current_user)
 
 
 @app.get("/projects/{project_id}", response_model=ProjectOut)
