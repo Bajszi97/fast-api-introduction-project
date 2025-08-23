@@ -1,8 +1,8 @@
 import os
-from dependencies import get_user_service, get_current_user, get_auth_service
+from dependencies import get_user_service, get_current_user, get_auth_service, get_project_service
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
-from services import UserService
+from services import UserService, ProjectService
 from sqlalchemy.orm import Session
 from db import get_db
 from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
@@ -42,27 +42,9 @@ async def login(credentials: LoginRequest, service: AuthService = Depends(get_au
 async def create_project(
     project: CreateProjectRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    project_service: ProjectService = Depends(get_project_service)
 ):
-    # create new Project
-    new_project = Project(
-        name=project.name,
-        description=project.description,
-    )
-    db.add(new_project)
-    db.flush()
-
-    # associate with admin
-    admin_assoc = UserProject(
-        user_id=current_user.id,
-        project_id=new_project.id,
-        role=Role.admin
-    )
-
-    db.add(admin_assoc)
-    db.commit()
-
-    return new_project
+    return project_service.create_for_user(project, current_user)
 
 
 @app.get("/projects", response_model=List[ProjectOut])
