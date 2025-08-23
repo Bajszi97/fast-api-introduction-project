@@ -1,6 +1,6 @@
 from models.user import User
 from repositories import UserRepository
-from services.auth import hash_password
+from services import AuthService
 from validators import CreateUserRequest
 
 
@@ -13,6 +13,6 @@ class UserService:
         if existing_user:
             raise ValueError("Username already exists")
 
-        hashed_password = hash_password(user_data.password)
+        hashed_password = AuthService.hash_password(user_data.password)
         user = self.repo.create(user_data, hashed_password)
         return user

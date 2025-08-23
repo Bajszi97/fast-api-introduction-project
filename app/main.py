@@ -1,5 +1,5 @@
 import os
-from dependencies import get_user_service
+from dependencies import get_user_service, get_current_user
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from services import UserService
@@ -8,8 +8,8 @@ from db import get_db
 from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
 from models import User, Project, UserProject, Document
 from models.enums import Role
-from services.auth import verify_password, get_current_user
 from typing import List
+from services import AuthService
 
 
 app = FastAPI()
@@ -28,7 +28,7 @@ async def register(user: CreateUserRequest, service: UserService = Depends(get_u
 async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     # authenticate user
     user = db.query(User).filter(User.username == credentials.username).first()
-    if not user or not verify_password(credentials.password, user.password):
+    if not user or not AuthService.verify_password(credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
