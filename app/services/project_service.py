@@ -13,3 +13,11 @@ class ProjectService:
     
     def get_user_projects(self, user: User) -> List[Project]:
         return self.repo.get_user_projects(user)
+    
+    def get_project_for_user(self, project_id: int, user: User):
+        project = self.repo.get_by_id(project_id)
+        if not project:
+            raise LookupError
+        if user not in project.users:
+            raise PermissionError
+        return project

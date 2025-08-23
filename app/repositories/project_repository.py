@@ -9,6 +9,9 @@ class ProjectRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def get_by_id(self, project_id: int) -> Project|None:
+        return self.db.query(Project).filter(Project.id == project_id).first()
+
     def create_for_user(self, project_data: CreateProjectRequest, user: User):
         new_project = Project(
             name = project_data.name,
