@@ -74,27 +74,15 @@ async def update_project(
     project_id: int,
     project_update: CreateProjectRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    project_service: ProjectService = Depends(get_project_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.admins:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update this project"
-        )
+    try:
+        return project_service.update_project_for_user(project_id, project_update, current_user)
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to update this project")
 
-    project.name = project_update.name
-    project.description = project_update.description
-
-    db.commit()
-    db.refresh(project)
-
-    return project
 
 
 @app.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)

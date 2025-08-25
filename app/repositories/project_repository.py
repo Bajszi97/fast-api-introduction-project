@@ -34,4 +34,17 @@ class ProjectRepository:
     
     def get_user_projects(self, user: User) -> List[Project]:
         return user.projects
+    
+    def update(self, project: Project, project_data: CreateProjectRequest) -> Project:
+        project.name = project_data.name
+        project.description = project_data.description
+        self.db.commit()
+        self.db.refresh(project)
+        return project
+    
+    def is_user_participant(self, project: Project, user: User) -> bool:
+        return user in project.users
+    
+    def is_user_admin(self, project: Project, user: User) -> bool:
+        return user in project.admins
 

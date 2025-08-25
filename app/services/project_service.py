@@ -18,6 +18,14 @@ class ProjectService:
         project = self.repo.get_by_id(project_id)
         if not project:
             raise LookupError
-        if user not in project.users:
+        if not self.repo.is_user_participant(project, user):
             raise PermissionError
         return project
+    
+    def update_project_for_user(self, project_id: int, project_data: CreateProjectRequest, user: User):
+        project = self.repo.get_by_id(project_id)
+        if not project:
+            raise LookupError
+        if not self.repo.is_user_admin(project, user):
+            raise PermissionError
+        return self.repo.update(project, project_data)
