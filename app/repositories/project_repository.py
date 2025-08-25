@@ -42,6 +42,10 @@ class ProjectRepository:
         self.db.refresh(project)
         return project
     
+    def delete(self, project: Project):
+        self.db.delete(project)
+        self.db.commit()
+    
     def is_user_participant(self, project: Project, user: User) -> bool:
         return user in project.users
     

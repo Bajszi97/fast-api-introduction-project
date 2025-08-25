@@ -29,3 +29,11 @@ class ProjectService:
         if not self.repo.is_user_admin(project, user):
             raise PermissionError
         return self.repo.update(project, project_data)
+    
+    def delete_project_for_user(self, project_id: int, user: User):
+        project = self.repo.get_by_id(project_id)
+        if not project:
+            raise LookupError
+        if not self.repo.is_user_admin(project, user):
+            raise PermissionError
+        self.repo.delete(project)

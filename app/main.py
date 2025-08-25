@@ -89,22 +89,14 @@ async def update_project(
 async def delete_project(
     project_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    project_service: ProjectService = Depends(get_project_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.admins:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete this project"
-        )
-
-    db.delete(project)
-    db.commit()
+    try:
+        return project_service.delete_project_for_user(project_id, current_user)
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to delete this project")
 
 
 @app.post("/projects/{project_id}/participants", status_code=status.HTTP_201_CREATED)
