@@ -14,8 +14,9 @@ def get_auth_service(db: Session = Depends(get_db)):
     return AuthService(repo)
 
 def get_project_service(db: Session = Depends(get_db)):
-    repo = ProjectRepository(db)
-    return ProjectService(repo)
+    project_repo = ProjectRepository(db)
+    user_repo = UserRepository(db)
+    return ProjectService(project_repo, user_repo)
 
 def get_current_user(
     token: str = Header(...),

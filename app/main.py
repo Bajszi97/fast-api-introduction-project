@@ -104,45 +104,19 @@ async def add_participant(
     project_id: int,
     participant: AddParticipantRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    project_service: ProjectService = Depends(get_project_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.admins:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to add participants"
-        )
+    try:
+        project_service.add_participant(project_id, participant.user_id, current_user)
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to add participants")
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    except RuntimeError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a participant")
 
-    user = db.query(User).filter(User.id == participant.user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-
-    existing_assoc = db.query(UserProject).filter(
-        UserProject.user_id == user.id,
-        UserProject.project_id == project.id
-    ).first()
-    if existing_assoc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is already a participant"
-        )
-
-    new_assoc = UserProject(
-        user_id=user.id,
-        project_id=project.id,
-        role=Role.participant
-    )
-    db.add(new_assoc)
-    db.commit()
-    
     return {"message": "Participant added successfully"}
 
 
