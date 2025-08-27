@@ -1,8 +1,9 @@
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, File, HTTPException, Header, UploadFile, status
 from services import UserService, AuthService, ProjectService, DocumentService
 from sqlalchemy.orm import Session
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from db import get_db
+from validators import UploadedDocument
 
 
 def get_user_service(db: Session = Depends(get_db)):
@@ -36,3 +37,12 @@ def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=str(e)
         )
+    
+def load_file_stream(file: UploadFile = File(...)) -> UploadedDocument:
+    content = file.file.read()
+    return UploadedDocument(
+        filename=file.filename,
+        content_type=file.content_type,
+        content=content
+
+    )

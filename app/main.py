@@ -1,11 +1,11 @@
 import os
-from dependencies import get_user_service, get_current_user, get_auth_service, get_project_service
+from dependencies import get_user_service, get_current_user, get_auth_service, get_project_service, get_document_service, load_file_stream
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
-from services import UserService, ProjectService
+from services import UserService, ProjectService, DocumentService
 from sqlalchemy.orm import Session
 from db import get_db
-from validators import CreateUserRequest, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
+from validators import CreateUserRequest, UploadedDocument, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
 from models import User, Project, UserProject, Document
 from models.enums import Role
 from typing import List
@@ -123,45 +123,18 @@ async def add_participant(
 @app.post("/porjects/{project_id}/documents", status_code=status.HTTP_201_CREATED, response_model=ProjectDocumentOut)
 async def upload_project_file(
     project_id: int,
-    file: UploadFile,
+    file: UploadedDocument = Depends(load_file_stream),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    document_service: DocumentService = Depends(get_document_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.users:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to upload documents to this project"
-        )
-    
-    existing_file = db.query(Document).filter(Document.project_id == project.id, Document.filename == file.filename).first()
-    if existing_file:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This project already has a document with this name"
-        )
-
-    new_document = Document(
-        project_id=project.id,
-        filename=file.filename,
-        file_type=file.content_type 
-    )
-
-    db.add(new_document)
-    db.commit()
-    db.refresh(new_document)
-
-    os.makedirs(Document.STORAGE_PATH.format(project_id=project.id), exist_ok=True)
-    
-    with open(new_document.path, "wb") as buffer:
-        buffer.write(await file.read())
-
-    return new_document
+    try:
+        return document_service.create_document_for_project(project_id, file, current_user)
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to upload documents to this project")
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This project already has a document with this name")
 
 
 

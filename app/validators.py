@@ -54,6 +54,12 @@ class AddParticipantRequest(BaseModel):
     user_id: int
 
 
+class UploadedDocument(BaseModel):
+    filename: Optional[Annotated[str, Field(min_length=1, max_length=256)]]
+    content_type: Optional[Annotated[str, Field(min_length=1, max_length=64)]]
+    content: bytes     
+
+
 class ProjectDocumentOut(BaseModel):
     id: int
     project_id: int
