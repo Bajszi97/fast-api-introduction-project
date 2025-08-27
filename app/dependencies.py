@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Header, status
-from services import UserService, AuthService, ProjectService
+from services import UserService, AuthService, ProjectService, DocumentService
 from sqlalchemy.orm import Session
-from repositories import UserRepository, ProjectRepository
+from repositories import UserRepository, ProjectRepository, DocumentRepository
 from db import get_db
 
 
@@ -17,6 +17,11 @@ def get_project_service(db: Session = Depends(get_db)):
     project_repo = ProjectRepository(db)
     user_repo = UserRepository(db)
     return ProjectService(project_repo, user_repo)
+
+def get_document_service(db: Session = Depends(get_db)):
+    document_repo = DocumentRepository(db)
+    project_repo = ProjectRepository(db)
+    return DocumentService(document_repo, project_repo)
 
 def get_current_user(
     token: str = Header(...),
