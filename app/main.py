@@ -142,21 +142,14 @@ async def upload_project_file(
 async def list_project_documents(
     project_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    document_service: DocumentService = Depends(get_document_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.users:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this project's documents"
-        )
-    
-    return project.documents
+    try:
+        return document_service.get_documents_of_project(project_id, current_user)
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this project's documents")
 
 
 @app.get("/projects/{project_id}/documents/{document_id}", response_model=ProjectDocumentOut)

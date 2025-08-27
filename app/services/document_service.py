@@ -19,5 +19,14 @@ class DocumentService:
             raise ValueError
         
         return self.document_repo.create_project_document(project.id, file)
+    
+    def get_documents_of_project(self, project_id: int, user: User):
+        project = self.project_repo.get_by_id(project_id)
+        if not project:
+            raise LookupError
+        if not self.project_repo.is_user_participant(project, user):
+            raise PermissionError
+        
+        return self.document_repo.get_documents_of_project(project)
 
         
