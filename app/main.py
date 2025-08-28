@@ -192,43 +192,18 @@ async def download_project_document(
 async def update_project_document(
     project_id: int,
     document_id: int,
-    file: UploadFile,
+    file: UploadedDocument = Depends(load_file_stream),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    document_service: DocumentService = Depends(get_document_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.users:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update this project's documents"
-        )
-    
-    document = db.query(Document).filter(Document.id == document_id, Document.project_id == project_id).first()
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project's document not found"
-        )
-    
-    os.remove(document.path)
-    
-    if file.filename is not None:
-        document.filename=file.filename
-    if file.content_type is not None:
-        document.file_type=file.content_type
-
-    db.commit()
-    db.refresh(project)
-
-    with open(document.path, "wb") as buffer:
-        buffer.write(await file.read())
-    
-    return document
+    try:
+        return document_service.update_document_for_project(project_id, document_id, file, current_user)
+    except LookupError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to upload documents to this project")
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This project already has a document with this name")
 
 
 @app.delete("/projects/{project_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

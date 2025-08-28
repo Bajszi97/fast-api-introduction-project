@@ -34,3 +34,19 @@ class DocumentRepository:
             buffer.write(file.content)
 
         return new_document
+    
+    def update_project_document(self, document: Document, file: UploadedDocument):
+        os.remove(document.path)
+    
+        if file.filename is not None:
+            document.filename=file.filename
+        if file.content_type is not None:
+            document.file_type=file.content_type
+
+        self.db.commit()
+        self.db.refresh(document)
+
+        with open(document.path, "wb") as buffer:
+            buffer.write(file.content)
+        
+        return document
