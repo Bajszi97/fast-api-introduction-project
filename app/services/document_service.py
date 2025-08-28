@@ -54,5 +54,17 @@ class DocumentService:
             raise LookupError("Project's document not found")
         
         return self.document_repo.update_project_document(document, file)
+    
+    def delete_project_document(self, project_id: int, document_id: int, user: User):
+        project = self.project_repo.get_by_id(project_id)
+        if not project:
+            raise LookupError("Project not found")
+        if not self.project_repo.is_user_participant(project, user):
+            raise PermissionError
         
+        document = self.document_repo.get_project_document_by_id(project.id, document_id) 
+        if not document:
+            raise LookupError("Project's document not found")
+        
+        self.document_repo.delete_project_document(document)
         

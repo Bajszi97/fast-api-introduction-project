@@ -50,3 +50,12 @@ class DocumentRepository:
             buffer.write(file.content)
         
         return document
+    
+    def delete_project_document(self, document: Document):
+        try:
+            os.remove(document.path)
+        except FileNotFoundError:
+            pass 
+
+        self.db.delete(document)
+        self.db.commit()
