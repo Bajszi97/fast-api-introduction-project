@@ -8,6 +8,9 @@ class DocumentRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def get_project_document_by_id(self, project_id: int, document_id: int) -> Document:
+        return self.db.query(Document).filter(Document.project_id == project_id, Document.id == document_id).first()
+
     def get_project_document_by_filename(self, project_id: int, filename):
         return self.db.query(Document).filter(Document.project_id == project_id, Document.filename == filename).first()
     

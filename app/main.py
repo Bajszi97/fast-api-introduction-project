@@ -157,28 +157,14 @@ async def get_project_document(
     project_id: int,
     document_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    document_service: DocumentService = Depends(get_document_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    if current_user not in project.users:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this project's documents"
-        )
-    
-    document = db.query(Document).filter(Document.id == document_id, Document.project_id == project_id).first()
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project's document not found"
-        )
-    
-    return document
+    try:
+        return document_service.get_project_document(project_id, document_id, current_user)
+    except LookupError as e: 
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to access this project's documents")
 
 
 @app.get("/projects/{project_id}/documents/{document_id}/download")
@@ -186,32 +172,20 @@ async def download_project_document(
     project_id: int,
     document_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    document_service: DocumentService = Depends(get_document_service)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
+    try:
+        document = document_service.get_project_document(project_id, document_id, current_user)
+        return FileResponse(
+            path=document.path,
+            filename=document.filename,
+            media_type=document.file_type
         )
-    if current_user not in project.users:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this project's documents"
-        )
-    
-    document = db.query(Document).filter(Document.id == document_id, Document.project_id == project_id).first()
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project's document not found"
-        )
-    
-    return FileResponse(
-        path=document.path,
-        filename=document.filename,
-        media_type=document.file_type
-    )
+    except LookupError as e: 
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to access this project's documents")
+
 
 
 @app.put("/projects/{project_id}/documents/{document_id}", response_model=ProjectDocumentOut)
