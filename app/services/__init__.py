@@ -3,4 +3,4 @@ from .user_service import UserService
 from .project_service import ProjectService
 from .document_service import DocumentService
 
-__all__ = ["AuthService", "UserService", "ProjectService"]
+__all__ = ["AuthService", "UserService", "ProjectService", "DocumentService"]
