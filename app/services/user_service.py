@@ -5,14 +5,14 @@ from validators import CreateUserRequest
 
 
 class UserService:
-    def __init__(self, repo: UserRepository):
-        self.repo = repo
+    def __init__(self, user_repo: UserRepository):
+        self.user_repo = user_repo
 
     def register_user(self, user_data: CreateUserRequest) -> User:
-        existing_user = self.repo.get_by_username(user_data.username)
+        existing_user = self.user_repo.get_by_username(user_data.username)
         if existing_user:
             raise ValueError("Username already exists")
 
         hashed_password = AuthService.hash_password(user_data.password)
-        user = self.repo.create(user_data, hashed_password)
+        user = self.user_repo.create(user_data, hashed_password)
         return user
