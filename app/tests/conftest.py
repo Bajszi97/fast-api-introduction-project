@@ -30,9 +30,14 @@ def document_repo_mock():
     return Mock(spec=DocumentRepository)
 
 @pytest.fixture
-def document_service(project_repo_mock, document_repo_mock):
+def project_service_mock():
+    """Fixture for a mocked ProjectService."""
+    return Mock(spec=ProjectService)
+
+@pytest.fixture
+def document_service(project_service_mock, document_repo_mock):
     """Fixture for the DocumentService."""
-    return DocumentService(document_repo_mock, project_repo_mock)
+    return DocumentService(document_repo_mock, project_service_mock)
 
 @pytest.fixture
 def user_data():

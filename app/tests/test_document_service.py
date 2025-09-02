@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 from models import project
+from models.enums.role import Role
 from services import DocumentService
 from tests.factories import make_document, make_project, make_user
 from validators import UploadedDocument
@@ -14,7 +15,7 @@ class TestDocumentService:
 
     def test_create_document_for_project(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -25,22 +26,20 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_filename.return_value = None
         document_repo_mock.create_project_document.return_value = document
 
         result = document_service.create_document_for_project(project.id, document_data, user)
 
-        project_repo_mock.get_by_id.assert_called_once_with(project.id)
-        project_repo_mock.is_user_participant.assert_called_once_with(project, user)
+        project_service_mock.get_project_and_check_permission.assert_called_once_with(project.id, user, Role.participant)
         document_repo_mock.get_project_document_by_filename.assert_called_once_with(project.id, document_data.filename)
         document_repo_mock.create_project_document.assert_called_once_with(project.id, document_data)
         assert result is document
     
     def test_create_document_for_project_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -50,7 +49,7 @@ class TestDocumentService:
         """
         user = make_user()
         project = make_project()
-        project_repo_mock.get_by_id.return_value = None
+        project_service_mock.get_project_and_check_permission.side_effect = LookupError
 
         with pytest.raises(LookupError):
             document_service.create_document_for_project(project.id, document_data, user)
@@ -59,7 +58,7 @@ class TestDocumentService:
     
     def test_create_document_for_project_permission_denied(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -69,8 +68,7 @@ class TestDocumentService:
         """
         user = make_user()
         project = make_project()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = False
+        project_service_mock.get_project_and_check_permission.side_effect = PermissionError
 
         with pytest.raises(PermissionError):
             document_service.create_document_for_project(project.id, document_data, user)
@@ -79,7 +77,7 @@ class TestDocumentService:
     
     def test_create_document_for_project_duplicate_filename(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -90,8 +88,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_filename.return_value = document
 
         with pytest.raises(ValueError):
@@ -101,7 +98,7 @@ class TestDocumentService:
     
     def test_get_documents_of_project(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -111,20 +108,18 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         documents = [make_document() for _ in range(3)]
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_documents_of_project.return_value = documents
 
         result = document_service.get_documents_of_project(project.id, user)
 
-        project_repo_mock.get_by_id.assert_called_once_with(project.id)
-        project_repo_mock.is_user_participant.assert_called_once_with(project, user)
+        project_service_mock.get_project_and_check_permission.assert_called_once_with(project.id, user, Role.participant)
         document_repo_mock.get_documents_of_project.assert_called_once_with(project)
         assert result == documents
 
     def test_get_documents_of_project_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -133,7 +128,7 @@ class TestDocumentService:
         """
         user = make_user()
         project = make_project()
-        project_repo_mock.get_by_id.return_value = None
+        project_service_mock.get_project_and_check_permission.side_effect = LookupError
 
         with pytest.raises(LookupError):
             document_service.get_documents_of_project(project.id, user)
@@ -142,7 +137,7 @@ class TestDocumentService:
 
     def test_get_documents_of_project_permission_denied(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -151,8 +146,7 @@ class TestDocumentService:
         """
         user = make_user()
         project = make_project()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = False
+        project_service_mock.get_project_and_check_permission.side_effect = PermissionError
 
         with pytest.raises(PermissionError):
             document_service.get_documents_of_project(project.id, user)
@@ -161,7 +155,7 @@ class TestDocumentService:
 
     def test_get_project_document(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -171,20 +165,18 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = document
 
         result = document_service.get_project_document(project.id, document.id, user)
 
-        project_repo_mock.get_by_id.assert_called_once_with(project.id)
-        project_repo_mock.is_user_participant.assert_called_once_with(project, user)
+        project_service_mock.get_project_and_check_permission.assert_called_once_with(project.id, user, Role.participant)
         document_repo_mock.get_project_document_by_id.assert_called_once_with(project.id, document.id)
         assert result is document
 
     def test_get_project_document_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -193,8 +185,7 @@ class TestDocumentService:
         """
         user = make_user()
         project = make_project()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = None
 
         with pytest.raises(LookupError):
@@ -204,7 +195,7 @@ class TestDocumentService:
 
     def test_get_project_document_permission_denied(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -213,8 +204,7 @@ class TestDocumentService:
         """
         user = make_user()
         project = make_project()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = False
+        project_service_mock.get_project_and_check_permission.side_effect = PermissionError
 
         with pytest.raises(PermissionError):
             document_service.get_project_document(project.id, 123, user)
@@ -223,7 +213,7 @@ class TestDocumentService:
 
     def test_update_document_for_project(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -234,22 +224,20 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = document
         document_repo_mock.update_project_document.return_value = document
 
         result = document_service.update_document_for_project(project.id, document.id, document_data, user)
 
-        project_repo_mock.get_by_id.assert_called_once_with(project.id)
-        project_repo_mock.is_user_participant.assert_called_once_with(project, user)
+        project_service_mock.get_project_and_check_permission.assert_called_once_with(project.id, user, Role.participant)
         document_repo_mock.get_project_document_by_id.assert_called_once_with(project.id, document.id)
         document_repo_mock.update_project_document.assert_called_once_with(document, document_data)
         assert result is document
 
     def test_update_document_for_project_project_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -260,7 +248,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = None
+        project_service_mock.get_project_and_check_permission.side_effect = LookupError
 
         with pytest.raises(LookupError):
             document_service.update_document_for_project(project.id, document.id, document_data, user)
@@ -269,7 +257,7 @@ class TestDocumentService:
     
     def test_update_document_for_project_permission_denied(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -280,8 +268,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = False
+        project_service_mock.get_project_and_check_permission.side_effect = PermissionError
 
         with pytest.raises(PermissionError):
             document_service.update_document_for_project(project.id, document.id, document_data, user)
@@ -290,7 +277,7 @@ class TestDocumentService:
 
     def test_update_document_for_project_document_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService,
         document_data: UploadedDocument
@@ -301,8 +288,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = None
 
         with pytest.raises(LookupError):
@@ -312,7 +298,7 @@ class TestDocumentService:
 
     def test_delete_project_document(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -322,22 +308,20 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = document
         document_repo_mock.delete_project_document.return_value = None
 
         result = document_service.delete_project_document(project.id, document.id, user)
 
-        project_repo_mock.get_by_id.assert_called_once_with(project.id)
-        project_repo_mock.is_user_participant.assert_called_once_with(project, user)
+        project_service_mock.get_project_and_check_permission.assert_called_once_with(project.id, user, Role.participant)
         document_repo_mock.get_project_document_by_id.assert_called_once_with(project.id, document.id)
         document_repo_mock.delete_project_document.assert_called_once_with(document)
         assert result is None
     
     def test_delete_project_document_project_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -347,7 +331,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = None
+        project_service_mock.get_project_and_check_permission.side_effect = LookupError
 
         with pytest.raises(LookupError):
             document_service.delete_project_document(project.id, document.id, user)
@@ -356,7 +340,7 @@ class TestDocumentService:
 
     def test_delete_project_document_permission_denied(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -366,8 +350,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = False
+        project_service_mock.get_project_and_check_permission.side_effect = PermissionError
 
         with pytest.raises(PermissionError):
             document_service.delete_project_document(project.id, document.id, user)
@@ -376,7 +359,7 @@ class TestDocumentService:
     
     def test_delete_project_document_document_not_found(
         self,
-        project_repo_mock: Mock,
+        project_service_mock: Mock,
         document_repo_mock: Mock,
         document_service: DocumentService
     ) -> None:
@@ -386,8 +369,7 @@ class TestDocumentService:
         user = make_user()
         project = make_project()
         document = make_document()
-        project_repo_mock.get_by_id.return_value = project
-        project_repo_mock.is_user_participant.return_value = True
+        project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = None
 
         with pytest.raises(LookupError):

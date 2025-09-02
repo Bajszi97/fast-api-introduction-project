@@ -19,10 +19,9 @@ def get_project_service(db: Session = Depends(get_db)):
     user_repo = UserRepository(db)
     return ProjectService(project_repo, user_repo)
 
-def get_document_service(db: Session = Depends(get_db)):
+def get_document_service(db: Session = Depends(get_db), project_service: ProjectService = Depends(get_project_service)):
     document_repo = DocumentRepository(db)
-    project_repo = ProjectRepository(db)
-    return DocumentService(document_repo, project_repo)
+    return DocumentService(document_repo, project_service)
 
 def get_current_user(
     token: str = Header(...),
