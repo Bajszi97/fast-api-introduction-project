@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 from services import UserService
 from models import User
+from tests.factories import make_user
 from validators import CreateUserRequest
 
 class TestUserService:
@@ -24,7 +25,7 @@ class TestUserService:
         user_repo_mock.get_by_username.return_value = None  # No existing user
         hashed_password = "hashed_securepassword123"
         mock_hash_password.return_value = hashed_password
-        created_user = User(id=1, username=user_data.username, password=hashed_password)
+        created_user = make_user(username=user_data.username, password=hashed_password)
         user_repo_mock.create.return_value = created_user
 
         registered_user: User = user_service.register_user(user_data)
@@ -46,7 +47,7 @@ class TestUserService:
         Test that a ValueError is raised when the username already exists.
         """
 
-        existing_user = User(id=1, username=user_data.username)
+        existing_user = make_user(username=user_data.username)
         user_repo_mock.get_by_username.return_value = existing_user # User already exists
 
         with pytest.raises(ValueError):
