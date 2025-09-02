@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock
-from repositories import UserRepository, ProjectRepository
-from services import UserService, ProjectService
-from validators import CreateUserRequest, CreateProjectRequest
+from repositories import UserRepository, ProjectRepository, DocumentRepository
+from services import UserService, ProjectService, DocumentService
+from validators import CreateUserRequest, CreateProjectRequest, UploadedDocument
 
 @pytest.fixture
 def user_repo_mock():
@@ -25,6 +25,16 @@ def project_service(user_repo_mock, project_repo_mock):
     return ProjectService(project_repo_mock, user_repo_mock)
 
 @pytest.fixture
+def document_repo_mock():
+    """Fixture for a mocked DocumentRepository."""
+    return Mock(spec=DocumentRepository)
+
+@pytest.fixture
+def document_service(project_repo_mock, document_repo_mock):
+    """Fixture for the DocumentService."""
+    return DocumentService(document_repo_mock, project_repo_mock)
+
+@pytest.fixture
 def user_data():
     """Fixture for the CreateUserRequest data."""
     return CreateUserRequest(
@@ -39,4 +49,12 @@ def project_data():
     return CreateProjectRequest(
         name="Test project",
         description="Describing my test project"
+    )
+
+@pytest.fixture
+def document_data():
+    return UploadedDocument(
+        filename="test.txt",
+        content_type="text/plain",
+        content=b"Test text in test.txt file"
     )
