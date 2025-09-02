@@ -1,6 +1,7 @@
 from tkinter import NO
 import pytest
 from unittest.mock import Mock
+from models.enums.role import Role
 from services import ProjectService
 from tests.factories import make_project, make_user
 from validators import CreateProjectRequest
@@ -324,6 +325,94 @@ class TestProjectService:
             project_service.add_participant(project.id, participant.id, user)
 
         project_repo_mock.add_participant.assert_not_called()
+
+    def test_get_project_and_check_permission_participant_success(
+        self,
+        project_repo_mock: Mock,
+        project_service: ProjectService
+    ) -> None:
+        """
+        Test that a project is returned when the user has participant permission.
+        """
+        user = make_user()
+        project = make_project()
+        project_repo_mock.get_by_id.return_value = project
+        project_repo_mock.is_user_participant.return_value = True
+
+        result = project_service.get_project_and_check_permission(project.id, user, Role.participant)
+
+        project_repo_mock.get_by_id.assert_called_once_with(project.id)
+        project_repo_mock.is_user_participant.assert_called_once_with(project, user)
+        assert result is project
+
+    def test_get_project_and_check_permission_admin_success(
+        self,
+        project_repo_mock: Mock,
+        project_service: ProjectService
+    ) -> None:
+        """
+        Test that a project is returned when the user has admin permission.
+        """
+        user = make_user()
+        project = make_project()
+        project_repo_mock.get_by_id.return_value = project
+        project_repo_mock.is_user_admin.return_value = True
+
+        result = project_service.get_project_and_check_permission(project.id, user, Role.admin)
+
+        project_repo_mock.get_by_id.assert_called_once_with(project.id)
+        project_repo_mock.is_user_admin.assert_called_once_with(project, user)
+        project_repo_mock.is_user_participant.assert_not_called()
+        assert result is project
+
+    def test_get_project_and_check_permission_project_not_found(
+        self,
+        project_repo_mock: Mock,
+        project_service: ProjectService
+    ) -> None:
+        """
+        Test that LookupError is raised if the project is not found.
+        """
+        user = make_user()
+        project = make_project()
+        project_repo_mock.get_by_id.return_value = None
+
+        with pytest.raises(LookupError):
+            project_service.get_project_and_check_permission(project.id, user, Role.participant)
+
+        project_repo_mock.is_user_participant.assert_not_called()
+
+    def test_get_project_and_check_permission_participant_denied(
+        self,
+        project_repo_mock: Mock,
+        project_service: ProjectService
+    ) -> None:
+        """
+        Test that PermissionError is raised for a participant when access is denied.
+        """
+        user = make_user()
+        project = make_project()
+        project_repo_mock.get_by_id.return_value = project
+        project_repo_mock.is_user_participant.return_value = False
+
+        with pytest.raises(PermissionError):
+            project_service.get_project_and_check_permission(project.id, user, Role.participant)
+
+    def test_get_project_and_check_permission_admin_denied(
+        self,
+        project_repo_mock: Mock,
+        project_service: ProjectService
+    ) -> None:
+        """
+        Test that PermissionError is raised for an admin when access is denied.
+        """
+        user = make_user()
+        project = make_project()
+        project_repo_mock.get_by_id.return_value = project
+        project_repo_mock.is_user_admin.return_value = False
+
+        with pytest.raises(PermissionError):
+            project_service.get_project_and_check_permission(project.id, user, Role.admin)
 
 
     
