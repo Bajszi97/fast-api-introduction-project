@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 from services import UserService
 from models import User
-from tests.factories import make_user
+from factories import make_user
 from validators import CreateUserRequest
 
 class TestUserService:

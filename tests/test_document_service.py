@@ -1,10 +1,8 @@
-from unittest.mock import Mock
-
 import pytest
-from models import project
+from unittest.mock import Mock
 from models.enums.role import Role
 from services import DocumentService
-from tests.factories import make_document, make_project, make_user
+from factories import make_document, make_project, make_user
 from validators import UploadedDocument
 
 

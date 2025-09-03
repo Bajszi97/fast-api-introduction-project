@@ -1,9 +1,8 @@
-from tkinter import NO
 import pytest
 from unittest.mock import Mock
 from models.enums.role import Role
 from services import ProjectService
-from tests.factories import make_project, make_user
+from factories import make_project, make_user
 from validators import CreateProjectRequest
 
 
