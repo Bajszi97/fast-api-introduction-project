@@ -35,7 +35,7 @@ class LoginResponse(BaseModel):
 
 
 class CreateProjectRequest(BaseModel):
-    name: Annotated[str, Field(max_length=128)]
+    name: Annotated[str, Field(min_length=1, max_length=128)]
     description: Optional[str] = None
 
 

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, File, HTTPException, Header, UploadFile, status
 from services import UserService, AuthService, ProjectService, DocumentService
 from sqlalchemy.orm import Session
@@ -24,9 +25,15 @@ def get_document_service(db: Session = Depends(get_db), project_service: Project
     return DocumentService(document_repo, project_service)
 
 def get_current_user(
-    token: str = Header(...),
+    token: Optional[str] = Header(None),
     db: Session = Depends(get_db)
-):
+):  
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token"
+        )
+
     repo = UserRepository(db)
     auth_service = AuthService(repo)
     try:
