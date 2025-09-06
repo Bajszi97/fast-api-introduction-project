@@ -9,7 +9,7 @@ from db import get_db, get_test_db, TEST_DB_URL, test_engine, Base
 from models import User
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from services import UserService, ProjectService, DocumentService
-from factories import create_user
+from factories import create_project, create_user
 from validators import CreateUserRequest, CreateProjectRequest, UploadedDocument
 
 @pytest.fixture(scope="session", autouse=True)
@@ -106,3 +106,9 @@ def user_factory(test_db):
     def _user_factory(username: str = "testuser", password: str = "strongtestpassword"):
         return create_user(test_db, username=username, password=password)
     return _user_factory
+
+@pytest.fixture
+def project_factory(test_db):   
+    def _project_factory(user: User, name: str = "testproject", description: str = "Describing the test project"):
+        return create_project(test_db, user=user, name=name, description=description)
+    return _project_factory

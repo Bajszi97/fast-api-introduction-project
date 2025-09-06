@@ -1,6 +1,7 @@
 from sqlalchemy import desc
 from models import Project, Document, User
 from repositories import UserRepository
+from repositories.project_repository import ProjectRepository
 from services.auth_service import AuthService
 from validators import CreateProjectRequest, CreateUserRequest
 from sqlalchemy.orm import Session
@@ -26,3 +27,9 @@ def create_user(db: Session, username: str = "testuser", password: str = "strong
     hashed_password = AuthService.hash_password(user_data.password)
 
     return user_repo.create(user_data=user_data, hashed_password=hashed_password)
+
+def create_project(db: Session, user: User, name: str = "testproject", description: str = "Describing the test project"):
+    project_repo = ProjectRepository(db)
+    project_data = make_project_request(name=name, description=description)
+
+    return project_repo.create_for_user(project_data=project_data, user=user)
