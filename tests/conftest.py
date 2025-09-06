@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -109,6 +110,6 @@ def user_factory(test_db):
 
 @pytest.fixture
 def project_factory(test_db):   
-    def _project_factory(user: User, name: str = "testproject", description: str = "Describing the test project"):
-        return create_project(test_db, user=user, name=name, description=description)
+    def _project_factory(user: User, name: str = "testproject", description: str = "Describing the test project", participants: List[User] = []):
+        return create_project(test_db, user=user, name=name, description=description, participants=participants)
     return _project_factory

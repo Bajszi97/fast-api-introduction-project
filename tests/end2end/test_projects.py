@@ -306,3 +306,133 @@ def test_unauthenticated_user_cannot_delete_project(
     response = client.delete(f"/projects/{project.id}") # No auth token
 
     assert response.status_code == 401
+
+
+def test_project_owner_can_add_participant(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that the project owner can successfully add another user as a participant.
+    """
+    owner = user_factory(username="owner")
+    participant_to_add = user_factory(username="new_participant")
+    headers = {"token": AuthService.get_token(owner)}
+    project = project_factory(user=owner)
+
+    response = client.post(
+        f"/projects/{project.id}/participants",
+        json={"user_id": participant_to_add.id},
+        headers=headers
+    )
+
+    assert response.status_code == 201
+    assert response.json()["message"] == "Participant added successfully"
+
+
+def test_non_owner_cannot_add_participant(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that a non-owner cannot add a participant to a project.
+    """
+    owner = user_factory(username="owner")
+    non_owner = user_factory(username="non_owner")
+    participant_to_add = user_factory(username="new_participant")
+    headers = {"token": AuthService.get_token(non_owner)}
+    project = project_factory(user=owner)
+
+    response = client.post(
+        f"/projects/{project.id}/participants",
+        json={"user_id": participant_to_add.id},
+        headers=headers
+    )
+
+    assert response.status_code == 403
+
+
+def test_add_participant_to_non_existent_project(
+    client: TestClient,
+    user_factory: Callable[..., User]
+):
+    """
+    Test that an attempt to add a participant to a non-existent project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    non_existent_project_id = 999
+    
+    response = client.post(
+        f"/projects/{non_existent_project_id}/participants",
+        json={"user_id": user.id},
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_add_non_existent_user_as_participant(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that an attempt to add a non-existent user as a participant returns a 404.
+    """
+    owner = user_factory(username="owner")
+    headers = {"token": AuthService.get_token(owner)}
+    project = project_factory(user=owner)
+    non_existent_user_id = 999
+    
+    response = client.post(
+        f"/projects/{project.id}/participants",
+        json={"user_id": non_existent_user_id},
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_add_existing_participant(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that an attempt to add a user who is already a participant returns a 400.
+    """
+    owner = user_factory(username="owner")
+    existing_participant = user_factory(username="existing_participant")
+    headers = {"token": AuthService.get_token(owner)}
+    project = project_factory(user=owner, participants=[existing_participant])
+    
+    response = client.post(
+        f"/projects/{project.id}/participants",
+        json={"user_id": existing_participant.id},
+        headers=headers
+    )
+    
+    assert response.status_code == 400
+
+
+def test_unauthenticated_user_cannot_add_participant(
+    client: TestClient,
+    project_factory: Callable[..., Project],
+    user_factory: Callable[..., User]
+):
+    """
+    Test that an unauthenticated user cannot add participants to a project.
+    """
+    owner = user_factory(username="owner")
+    participant_to_add = user_factory(username="new_participant")
+    project = project_factory(user=owner)
+
+    response = client.post(
+        f"/projects/{project.id}/participants",
+        json={"user_id": participant_to_add.id}
+    )
+
+    assert response.status_code == 401
