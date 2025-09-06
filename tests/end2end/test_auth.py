@@ -4,6 +4,7 @@ from factories import make_register_request
 from typing import Callable
 from models import User
 from sqlalchemy.orm import Session
+from validators import UserOut
 
 def test_register_and_login(client: TestClient):
     """
@@ -16,9 +17,8 @@ def test_register_and_login(client: TestClient):
     response = client.post("/auth", json=register_data.model_dump())
     
     assert response.status_code == 201
-    data = response.json()
-    assert "id" in data
-    assert data["username"] == register_data.username
+    user = UserOut(**response.json())
+    assert user.username == register_data.username 
 
     # --- 2. Login with the same credentials ---
     login_data = {
