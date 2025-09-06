@@ -13,7 +13,7 @@ class AuthService:
         if not user or not AuthService.verify_password(credentials.password, user.password):
             raise ValueError("Invalid username or password")
 
-        return f"login-token-{user.username}"
+        return AuthService.get_token(user)
 
     def get_current_user(self, token: str) -> User:
         username = self.verify_token(token)
@@ -21,6 +21,10 @@ class AuthService:
         if user is None:
             raise ValueError("Invalid token")  # User not found, just hidden
         return user
+    
+    @staticmethod
+    def get_token(user: User) -> str:
+        return f"login-token-{user.username}"
 
     @staticmethod
     def verify_token(token: str) -> str:
