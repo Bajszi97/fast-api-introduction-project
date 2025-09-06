@@ -1,10 +1,11 @@
+import io
 from typing import List
 from sqlalchemy import desc
 from models import Project, Document, User
 from repositories import UserRepository
 from repositories.project_repository import ProjectRepository
 from services.auth_service import AuthService
-from validators import CreateProjectRequest, CreateUserRequest
+from validators import CreateProjectRequest, CreateUserRequest, UploadedDocument
 from sqlalchemy.orm import Session
 
 def make_user(id: int = 1, username: str = "testuser", password: str = "hashed_password") -> User:
@@ -21,6 +22,10 @@ def make_register_request(username: str = "testuser", password: str = "strongtes
 
 def make_project_request(name: str = "testproject", description: str = "Describing the test project") -> CreateProjectRequest:
     return CreateProjectRequest(name=name, description=description)
+
+def make_document_request(filename: str = "test_document.txt", file_content = b"This is the content of the test document.", file_type: str = "text/plain"):
+    return {"file": (filename, io.BytesIO(file_content), file_type)}
+
 
 def create_user(db: Session, username: str = "testuser", password: str = "strongtestpassword"):
     user_repo = UserRepository(db)
