@@ -161,4 +161,77 @@ def test_unauthenticated_user_cannot_get_project(
     assert response.status_code == 401
 
 
+def test_user_can_update_their_project(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that a user can successfully update a project they own.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    original_project = project_factory(user=user, name="Old Project Name", description="Old description")
+    updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
+
+    response = client.put(f"/projects/{original_project.id}", json=updated_data.model_dump(), headers=headers)
+    
+    assert response.status_code == 200
+    updated_project = ProjectOut(**response.json())
+    assert updated_project.id == original_project.id
+    assert updated_project.name == "Updated Project Name"
+    assert updated_project.description == "New description for the project"
+
+
+def test_user_cannot_update_another_users_project(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that a user cannot update a project that belongs to another user.
+    """
+    user1 = user_factory(username="user1")
+    user2 = user_factory(username="user2")
+    headers = {"token": AuthService.get_token(user1)}
+    project_for_user2 = project_factory(user=user2, name="Project to be hijacked")
+    updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
+
+    response = client.put(f"/projects/{project_for_user2.id}", json=updated_data.model_dump(), headers=headers)
+
+    assert response.status_code == 403
+
+
+def test_update_non_existent_project(
+    client: TestClient, 
+    user_factory: Callable[..., User]
+):
+    """
+    Test that an attempt to update a non-existent project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    non_existent_project_id = 999
+    updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
+
+    response = client.put(f"/projects/{non_existent_project_id}", json=updated_data.model_dump(), headers=headers)
+
+    assert response.status_code == 404
+
+
+def test_unauthenticated_user_cannot_update_project(
+    client: TestClient, 
+    user_factory: Callable[..., User], 
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that an unauthenticated user cannot update any project.
+    """
+    user = user_factory()
+    project = project_factory(user=user, name="My Project")
+    updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
+
+    response = client.put(f"/projects/{project.id}", json=updated_data.model_dump()) # No auth token
+
+    assert response.status_code == 401
 
