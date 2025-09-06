@@ -35,7 +35,7 @@ def test_only_logged_in_user_can_create_project(client: TestClient, user_factory
     assert response.status_code == 401
 
 
-def test_project_can_not_be_created_without_name(client: TestClient, user_factory: Callable[..., User]):
+def test_project_cannot_be_created_without_name(client: TestClient, user_factory: Callable[..., User]):
     """
     Test that a user can create a project.
     """
@@ -235,3 +235,74 @@ def test_unauthenticated_user_cannot_update_project(
 
     assert response.status_code == 401
 
+
+def test_user_can_delete_their_project(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that a user can successfully delete a project they own.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    project = project_factory(user=user, name="Project to be deleted")
+
+    response = client.delete(f"/projects/{project.id}", headers=headers)
+    
+    assert response.status_code == 204
+    assert not response.content
+
+    # Verify the project is actually deleted by trying to retrieve it
+    get_response = client.get(f"/projects/{project.id}", headers=headers)
+    assert get_response.status_code == 404
+
+
+def test_user_cannot_delete_another_users_project(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that a user cannot delete a project that belongs to another user.
+    """
+    user1 = user_factory(username="user1")
+    user2 = user_factory(username="user2")
+    headers = {"token": AuthService.get_token(user1)}
+    project_for_user2 = project_factory(user=user2, name="Project to be hijacked")
+    
+    response = client.delete(f"/projects/{project_for_user2.id}", headers=headers)
+
+    assert response.status_code == 403
+
+
+def test_delete_non_existent_project(
+    client: TestClient, 
+    user_factory: Callable[..., User]
+):
+    """
+    Test that an attempt to delete a non-existent project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    non_existent_project_id = 999
+    
+    response = client.delete(f"/projects/{non_existent_project_id}", headers=headers)
+
+    assert response.status_code == 404
+
+
+def test_unauthenticated_user_cannot_delete_project(
+    client: TestClient, 
+    user_factory: Callable[..., User], 
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that an unauthenticated user cannot delete any project.
+    """
+    user = user_factory()
+    project = project_factory(user=user, name="My Project")
+
+    response = client.delete(f"/projects/{project.id}") # No auth token
+
+    assert response.status_code == 401
