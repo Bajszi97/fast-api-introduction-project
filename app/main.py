@@ -38,7 +38,7 @@ async def login(credentials: LoginRequest, service: AuthService = Depends(get_au
         )
 
 
-@app.post("/projects", response_model=ProjectOut)
+@app.post("/projects", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
 async def create_project(
     project: CreateProjectRequest,
     current_user: User = Depends(get_current_user),
