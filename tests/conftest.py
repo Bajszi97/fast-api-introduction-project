@@ -1,8 +1,38 @@
 import pytest
+from alembic import command
+from alembic.config import Config
+from fastapi.testclient import TestClient
 from unittest.mock import Mock
+from sqlalchemy import text
+from main import app
+from db import get_db, get_test_db, TEST_DB_URL, test_engine, Base
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from services import UserService, ProjectService, DocumentService
 from validators import CreateUserRequest, CreateProjectRequest, UploadedDocument
+
+@pytest.fixture(scope="session", autouse=True)
+def apply_migrations():
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", TEST_DB_URL)
+
+    command.upgrade(alembic_cfg, "head")
+    yield
+    command.downgrade(alembic_cfg, "base")
+
+@pytest.fixture(scope="session")
+def client(apply_migrations):
+    app.dependency_overrides[get_db] = get_test_db
+    with TestClient(app) as c:
+        yield c
+
+@pytest.fixture(autouse=True)
+def truncate_tables():
+    with test_engine.begin() as conn:
+        conn.execute(text("SET session_replication_role = replica;"))
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(table.delete())
+        conn.execute(text("SET session_replication_role = DEFAULT;"))
+    yield
 
 @pytest.fixture
 def user_repo_mock():
