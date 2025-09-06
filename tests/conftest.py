@@ -6,8 +6,10 @@ from unittest.mock import Mock
 from sqlalchemy import text
 from main import app
 from db import get_db, get_test_db, TEST_DB_URL, test_engine, Base
+from models import User
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from services import UserService, ProjectService, DocumentService
+from factories import create_user
 from validators import CreateUserRequest, CreateProjectRequest, UploadedDocument
 
 @pytest.fixture(scope="session", autouse=True)
@@ -26,13 +28,18 @@ def client(apply_migrations):
         yield c
 
 @pytest.fixture(autouse=True)
-def truncate_tables():
+def truncate_tables(test_db):
+    test_engine = test_db.get_bind()
     with test_engine.begin() as conn:
         conn.execute(text("SET session_replication_role = replica;"))
         for table in reversed(Base.metadata.sorted_tables):
             conn.execute(table.delete())
         conn.execute(text("SET session_replication_role = DEFAULT;"))
     yield
+
+@pytest.fixture
+def test_db():
+    yield from get_test_db()
 
 @pytest.fixture
 def user_repo_mock():
@@ -93,3 +100,9 @@ def document_data():
         content_type="text/plain",
         content=b"Test text in test.txt file"
     )
+
+@pytest.fixture
+def user_factory(test_db):   
+    def _user_factory(username: str = "testuser", password: str = "strongtestpassword"):
+        return create_user(test_db, username=username, password=password)
+    return _user_factory
