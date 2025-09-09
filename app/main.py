@@ -1,97 +1,16 @@
-from dependencies import get_current_user, get_project_service, get_document_service, load_file_stream
+from dependencies import get_current_user, get_document_service, load_file_stream
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import FileResponse
-from services import ProjectService, DocumentService
-from schemas import UploadedDocument, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
+from services import DocumentService
+from schemas import UploadedDocument, ProjectDocumentOut
 from models import User
 from typing import List
-from routes import auth_router
+from routes import auth_router, project_router
 
 
 app = FastAPI()
 app.include_router(auth_router)
-
-
-@app.post("/projects", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
-async def create_project(
-    project: CreateProjectRequest,
-    current_user: User = Depends(get_current_user),
-    project_service: ProjectService = Depends(get_project_service)
-):
-    return project_service.create_for_user(project, current_user)
-
-
-@app.get("/projects", response_model=List[ProjectOut])
-async def list_projects(
-    current_user: User = Depends(get_current_user),
-    project_service: ProjectService = Depends(get_project_service)
-):
-    return project_service.get_user_projects(current_user)
-
-
-@app.get("/projects/{project_id}", response_model=ProjectOut)
-async def get_project(
-    project_id: int,
-    current_user: User = Depends(get_current_user),
-    project_service: ProjectService = Depends(get_project_service)
-):  
-    try:
-        return project_service.get_project_for_user(project_id, current_user)
-    except LookupError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    except PermissionError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this project")
-
-
-@app.put("/projects/{project_id}", response_model=ProjectOut)
-async def update_project(
-    project_id: int,
-    project_update: CreateProjectRequest,
-    current_user: User = Depends(get_current_user),
-    project_service: ProjectService = Depends(get_project_service)
-):
-    try:
-        return project_service.update_project_for_user(project_id, project_update, current_user)
-    except LookupError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    except PermissionError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to update this project")
-
-
-
-@app.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(
-    project_id: int,
-    current_user: User = Depends(get_current_user),
-    project_service: ProjectService = Depends(get_project_service)
-):
-    try:
-        return project_service.delete_project_for_user(project_id, current_user)
-    except LookupError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    except PermissionError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to delete this project")
-
-
-@app.post("/projects/{project_id}/participants", status_code=status.HTTP_201_CREATED)
-async def add_participant(
-    project_id: int,
-    participant: AddParticipantRequest,
-    current_user: User = Depends(get_current_user),
-    project_service: ProjectService = Depends(get_project_service)
-):
-    try:
-        project_service.add_participant(project_id, participant.user_id, current_user)
-    except LookupError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    except PermissionError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to add participants")
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    except RuntimeError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a participant")
-
-    return {"message": "Participant added successfully"}
+app.include_router(project_router)
 
 
 @app.post("/porjects/{project_id}/documents", status_code=status.HTTP_201_CREATED, response_model=ProjectDocumentOut)
