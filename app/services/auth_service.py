@@ -1,10 +1,20 @@
+from datetime import datetime, timedelta
+import os
 import bcrypt
+import jwt
 from repositories import UserRepository
 from models import User
 from schemas import LoginRequest
 
 
 class AuthService:
+    SECRET_KEY = os.getenv("APP_KEY")
+    if not SECRET_KEY:
+        raise RuntimeError("APP_KEY environment variable not set")
+    
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
 
@@ -13,24 +23,32 @@ class AuthService:
         if not user or not AuthService.verify_password(credentials.password, user.password):
             raise ValueError("Invalid username or password")
 
-        return AuthService.get_token(user)
+        return AuthService.create_access_token(user)
 
     def get_current_user(self, token: str) -> User:
-        username = self.verify_token(token)
-        user = self.user_repo.get_by_username(username)
+        token_data = self.verify_token(token)
+        user = self.user_repo.get_by_id(token_data.get('userId'))
         if user is None:
             raise ValueError("Invalid token")  # User not found, just hidden
-        return user
+        return user 
     
-    @staticmethod
-    def get_token(user: User) -> str:
-        return f"login-token-{user.username}"
+    @classmethod
+    def create_access_token(cls, user: User) -> str:
+        expire = datetime.now() + timedelta(minutes=cls.ACCESS_TOKEN_EXPIRE_MINUTES)
+        to_encode = {
+            "userId": user.id,
+            "exp": expire
+        }
+        return jwt.encode(to_encode, cls.SECRET_KEY, algorithm=cls.ALGORITHM)
 
-    @staticmethod
-    def verify_token(token: str) -> str:
-        if not token.startswith("login-token-"):
+    @classmethod
+    def verify_token(cls, token: str) -> dict:
+        try:
+            return jwt.decode(token, cls.SECRET_KEY, algorithms=[cls.ALGORITHM])
+        except jwt.ExpiredSignatureError:
+            raise ValueError("Token expired")
+        except jwt.InvalidTokenError:
             raise ValueError("Invalid token")
-        return token[12:]
 
     @staticmethod
     def hash_password(password: str) -> str:

@@ -10,7 +10,6 @@ def test_register_and_login(client: TestClient):
     """
     Test that a user can register and login with those credentials.
     """
-
     # --- 1. Register a new user ---
     register_data = make_register_request()
 
@@ -31,13 +30,12 @@ def test_register_and_login(client: TestClient):
     assert response.status_code == 200
     token_data = response.json()
     assert "token" in token_data
-    assert token_data["token"] == "login-token-testuser"
+
 
 def test_username_already_taken(client: TestClient, test_db: Session, user_factory: Callable[..., User]):
     """
     Test that a user can not register if the username is already taken.
     """
-
     existing_user = user_factory()
     register_data = make_register_request(username=existing_user.username)
 
@@ -51,7 +49,6 @@ def test_user_can_not_login_with_wrong_password(client: TestClient, user_factory
     """
     Test that a user can not login with a wrong password.
     """
-
     existing_user = user_factory()
     login_data = {
         "username": existing_user.username,
@@ -68,7 +65,6 @@ def test_unregistered_user_can_not_login(client: TestClient):
     """
     Test that an unregistered user can not login.
     """
-    
     login_data = {
         "username": "notexistinguser",
         "password": "notexistingpw"

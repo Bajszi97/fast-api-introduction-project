@@ -13,7 +13,7 @@ def test_user_can_create_project(client: TestClient, user_factory: Callable[...,
     Test that a user can create a project.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     project_request = make_project_request() 
 
     response = client.post("/projects", json=project_request.model_dump(), headers=headers)
@@ -40,7 +40,7 @@ def test_project_cannot_be_created_without_name(client: TestClient, user_factory
     Test that a user can create a project.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     project_request = {
         "name": "",
     }
@@ -58,7 +58,7 @@ def test_user_can_get_their_projects(
     Test that a user can retrieve a list of their projects.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     project_count = 5
     projects = [project_factory(user=user, name=f"Test Project {n}") for n in range(project_count)]
 
@@ -75,7 +75,7 @@ def test_user_gets_no_projects_if_none_exist(client: TestClient, user_factory: C
     Test that a user gets an empty list if they have no projects.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
 
     response = client.get("/projects", headers=headers)
 
@@ -100,7 +100,7 @@ def test_user_can_get_their_project(
     Test that a user can retrieve a specific project they own.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     project = project_factory(user=user, name="My Project")
     
     response = client.get(f"/projects/{project.id}", headers=headers)
@@ -121,7 +121,7 @@ def test_user_cannot_get_another_users_project(
     """
     user1 = user_factory(username="user1")
     user2 = user_factory(username="user2")
-    headers = {"token": AuthService.get_token(user1)}
+    headers = {"token": AuthService.create_access_token(user1)}
     project_for_user2 = project_factory(user=user2, name="Another User's Project")
 
     response = client.get(f"/projects/{project_for_user2.id}", headers=headers)
@@ -137,7 +137,7 @@ def test_get_non_existent_project(
     Test that an attempt to retrieve a non-existent project returns a 404.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     non_existent_project_id = 999
     
     response = client.get(f"/projects/{non_existent_project_id}", headers=headers)
@@ -170,7 +170,7 @@ def test_user_can_update_their_project(
     Test that a user can successfully update a project they own.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     original_project = project_factory(user=user, name="Old Project Name", description="Old description")
     updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
 
@@ -193,7 +193,7 @@ def test_user_cannot_update_another_users_project(
     """
     user1 = user_factory(username="user1")
     user2 = user_factory(username="user2")
-    headers = {"token": AuthService.get_token(user1)}
+    headers = {"token": AuthService.create_access_token(user1)}
     project_for_user2 = project_factory(user=user2, name="Project to be hijacked")
     updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
 
@@ -210,7 +210,7 @@ def test_update_non_existent_project(
     Test that an attempt to update a non-existent project returns a 404.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     non_existent_project_id = 999
     updated_data = make_project_request(name="Updated Project Name", description="New description for the project")
 
@@ -245,7 +245,7 @@ def test_user_can_delete_their_project(
     Test that a user can successfully delete a project they own.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     project = project_factory(user=user, name="Project to be deleted")
 
     response = client.delete(f"/projects/{project.id}", headers=headers)
@@ -268,7 +268,7 @@ def test_user_cannot_delete_another_users_project(
     """
     user1 = user_factory(username="user1")
     user2 = user_factory(username="user2")
-    headers = {"token": AuthService.get_token(user1)}
+    headers = {"token": AuthService.create_access_token(user1)}
     project_for_user2 = project_factory(user=user2, name="Project to be hijacked")
     
     response = client.delete(f"/projects/{project_for_user2.id}", headers=headers)
@@ -284,7 +284,7 @@ def test_delete_non_existent_project(
     Test that an attempt to delete a non-existent project returns a 404.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     non_existent_project_id = 999
     
     response = client.delete(f"/projects/{non_existent_project_id}", headers=headers)
@@ -318,7 +318,7 @@ def test_project_owner_can_add_participant(
     """
     owner = user_factory(username="owner")
     participant_to_add = user_factory(username="new_participant")
-    headers = {"token": AuthService.get_token(owner)}
+    headers = {"token": AuthService.create_access_token(owner)}
     project = project_factory(user=owner)
 
     response = client.post(
@@ -342,7 +342,7 @@ def test_non_owner_cannot_add_participant(
     owner = user_factory(username="owner")
     non_owner = user_factory(username="non_owner")
     participant_to_add = user_factory(username="new_participant")
-    headers = {"token": AuthService.get_token(non_owner)}
+    headers = {"token": AuthService.create_access_token(non_owner)}
     project = project_factory(user=owner)
 
     response = client.post(
@@ -362,7 +362,7 @@ def test_add_participant_to_non_existent_project(
     Test that an attempt to add a participant to a non-existent project returns a 404.
     """
     user = user_factory()
-    headers = {"token": AuthService.get_token(user)}
+    headers = {"token": AuthService.create_access_token(user)}
     non_existent_project_id = 999
     
     response = client.post(
@@ -383,7 +383,7 @@ def test_add_non_existent_user_as_participant(
     Test that an attempt to add a non-existent user as a participant returns a 404.
     """
     owner = user_factory(username="owner")
-    headers = {"token": AuthService.get_token(owner)}
+    headers = {"token": AuthService.create_access_token(owner)}
     project = project_factory(user=owner)
     non_existent_user_id = 999
     
@@ -406,7 +406,7 @@ def test_add_existing_participant(
     """
     owner = user_factory(username="owner")
     existing_participant = user_factory(username="existing_participant")
-    headers = {"token": AuthService.get_token(owner)}
+    headers = {"token": AuthService.create_access_token(owner)}
     project = project_factory(user=owner, participants=[existing_participant])
     
     response = client.post(
