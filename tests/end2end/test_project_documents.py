@@ -484,3 +484,107 @@ def test_unauthenticated_user_cannot_update_document(
     response = client.put(f"/projects/{project.id}/documents/{document.id}", files=updated_file) # No auth token
 
     assert response.status_code == 401
+
+def test_user_can_delete_their_project_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that a user can successfully delete a specific document from a project they own.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    project = project_factory(user=user)
+    document = document_factory(project=project)
+
+    response = client.delete(f"/projects/{project.id}/documents/{document.id}", headers=headers)
+
+    assert response.status_code == 204
+    assert not response.content 
+
+    get_response = client.get(f"/projects/{project.id}/documents/{document.id}", headers=headers)
+    assert get_response.status_code == 404
+
+
+def test_user_cannot_delete_another_users_project_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that a user cannot delete a document from a project that belongs to a different user.
+    """
+    owner = user_factory(username="owner")
+    non_owner = user_factory(username="non_owner")
+    headers = {"token": AuthService.get_token(non_owner)}
+    project_for_owner = project_factory(user=owner)
+    document_for_owner = document_factory(project=project_for_owner)
+
+    response = client.delete(
+        f"/projects/{project_for_owner.id}/documents/{document_for_owner.id}", 
+        headers=headers
+    )
+
+    assert response.status_code == 403
+
+
+def test_delete_document_from_non_existent_project(
+    client: TestClient,
+    user_factory: Callable[..., User]
+):
+    """
+    Test that an attempt to delete a document from a non-existent project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    non_existent_project_id = 999
+    non_existent_document_id = 1
+
+    response = client.delete(
+        f"/projects/{non_existent_project_id}/documents/{non_existent_document_id}",
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_delete_non_existent_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that an attempt to delete a non-existent document from an existing project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    project = project_factory(user=user)
+    non_existent_document_id = 999
+
+    response = client.delete(
+        f"/projects/{project.id}/documents/{non_existent_document_id}",
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_unauthenticated_user_cannot_delete_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that an unauthenticated user cannot delete a document from any project.
+    """
+    user = user_factory()
+    project = project_factory(user=user)
+    document = document_factory(project=project)
+
+    response = client.delete(f"/projects/{project.id}/documents/{document.id}") # No auth token
+
+    assert response.status_code == 401
