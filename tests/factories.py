@@ -47,7 +47,7 @@ def create_document(
     content: str = "Text file content.",
     file_type: str = "text/plain"
 ):
-    document_repo = DocumentRepository(db)
+    document_repo = DocumentRepository(db, True)
     document_data = UploadedDocument(
         filename=filename,
         content=content.encode(),

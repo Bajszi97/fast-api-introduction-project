@@ -9,7 +9,7 @@ class DocumentRepository:
 
     def __init__(self, db: Session, use_test_dir: bool = False) -> None:
         self.db = db
-        self.storage_dir = "data-test" if use_test_dir else "data"
+        self.storage_dir = os.getenv("TEST_STORAGE_DIR", "data-test") if use_test_dir else os.getenv("STORAGE_DIR", "data")
 
     def get_project_document_by_id(self, project_id: int, document_id: int) -> Document:
         return self.db.query(Document).filter(Document.project_id == project_id, Document.id == document_id).first()
