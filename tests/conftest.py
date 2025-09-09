@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from services import UserService, ProjectService, DocumentService
-from validators import CreateUserRequest, CreateProjectRequest, UploadedDocument
+from schemas import CreateUserRequest, CreateProjectRequest, UploadedDocument
 
 @pytest.fixture
 def user_repo_mock():

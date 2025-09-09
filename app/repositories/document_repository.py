@@ -1,7 +1,7 @@
 import os
 from models import Document, Project
 from sqlalchemy.orm import Session
-from validators import UploadedDocument
+from schemas import UploadedDocument
 
 
 class DocumentRepository:

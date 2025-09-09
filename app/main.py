@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from services import UserService, ProjectService, DocumentService
 from sqlalchemy.orm import Session
 from db import get_db
-from validators import CreateUserRequest, UploadedDocument, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
+from schemas import CreateUserRequest, UploadedDocument, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
 from models import User, Project, UserProject, Document
 from models.enums import Role
 from typing import List

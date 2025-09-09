@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from models.enums.role import Role
 from services import ProjectService
 from factories import make_project, make_user
-from validators import CreateProjectRequest
+from schemas import CreateProjectRequest
 
 
 class TestProjectService:

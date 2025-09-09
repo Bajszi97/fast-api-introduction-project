@@ -1,7 +1,7 @@
 from models.user import User
 from repositories import UserRepository
 from services import AuthService
-from validators import CreateUserRequest
+from schemas import CreateUserRequest
 
 
 class UserService:

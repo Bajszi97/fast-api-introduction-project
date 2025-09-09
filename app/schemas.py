@@ -23,7 +23,6 @@ class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -49,7 +48,6 @@ class ProjectOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-
 class AddParticipantRequest(BaseModel):
     user_id: int
 
@@ -57,7 +55,7 @@ class AddParticipantRequest(BaseModel):
 class UploadedDocument(BaseModel):
     filename: Optional[Annotated[str, Field(min_length=1, max_length=256)]]
     content_type: Optional[Annotated[str, Field(min_length=1, max_length=64)]]
-    content: bytes     
+    content: bytes
 
 
 class ProjectDocumentOut(BaseModel):

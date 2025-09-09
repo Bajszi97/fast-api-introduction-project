@@ -4,7 +4,7 @@ from factories import make_register_request
 from typing import Callable
 from models import User
 from sqlalchemy.orm import Session
-from validators import UserOut
+from schemas import UserOut
 
 def test_register_and_login(client: TestClient):
     """

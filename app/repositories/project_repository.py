@@ -2,7 +2,7 @@ from typing import List
 from models import Project, UserProject, User
 from models.enums import Role
 from sqlalchemy.orm import Session
-from validators import CreateProjectRequest
+from schemas import CreateProjectRequest
 
 
 class ProjectRepository:

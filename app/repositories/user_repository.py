@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from models import User
-from validators import CreateUserRequest
+from schemas import CreateUserRequest
 
 
 class UserRepository:

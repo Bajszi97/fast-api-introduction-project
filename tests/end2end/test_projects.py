@@ -5,7 +5,7 @@ from models import User
 from factories import make_project_request
 from models.project import Project
 from services.auth_service import AuthService
-from validators import ProjectOut
+from schemas import ProjectOut
 
 
 def test_user_can_create_project(client: TestClient, user_factory: Callable[..., User]):

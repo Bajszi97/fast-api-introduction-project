@@ -1,7 +1,7 @@
 import bcrypt
 from repositories import UserRepository
 from models import User
-from validators import LoginRequest
+from schemas import LoginRequest
 
 
 class AuthService:

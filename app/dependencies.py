@@ -4,7 +4,7 @@ from services import UserService, AuthService, ProjectService, DocumentService
 from sqlalchemy.orm import Session
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from db import get_db
-from validators import UploadedDocument
+from schemas import UploadedDocument
 
 
 def get_user_service(db: Session = Depends(get_db)):

@@ -1,7 +1,7 @@
 from models import User, Project
 from models.enums.role import Role
 from repositories import ProjectRepository, UserRepository
-from validators import CreateProjectRequest
+from schemas import CreateProjectRequest
 from typing import List 
 
 

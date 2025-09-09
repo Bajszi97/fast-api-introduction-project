@@ -3,7 +3,7 @@ from typing import List
 from models import Project, Document, User
 from repositories import UserRepository, ProjectRepository, DocumentRepository
 from services.auth_service import AuthService
-from validators import CreateProjectRequest, CreateUserRequest, UploadedDocument
+from schemas import CreateProjectRequest, CreateUserRequest, UploadedDocument
 from sqlalchemy.orm import Session
 
 def make_user(id: int = 1, username: str = "testuser", password: str = "hashed_password") -> User:

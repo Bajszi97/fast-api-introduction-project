@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from services import UserService
 from models import User
 from factories import make_user
-from validators import CreateUserRequest
+from schemas import CreateUserRequest
 
 class TestUserService:
     """

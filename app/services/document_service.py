@@ -2,7 +2,7 @@ from models import User, Document
 from models.enums.role import Role
 from repositories import DocumentRepository
 from services import ProjectService
-from validators import UploadedDocument
+from schemas import UploadedDocument
 
 
 class DocumentService:
