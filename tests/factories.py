@@ -1,9 +1,7 @@
 import io
 from typing import List
-from sqlalchemy import desc
 from models import Project, Document, User
-from repositories import UserRepository
-from repositories.project_repository import ProjectRepository
+from repositories import UserRepository, ProjectRepository, DocumentRepository
 from services.auth_service import AuthService
 from validators import CreateProjectRequest, CreateUserRequest, UploadedDocument
 from sqlalchemy.orm import Session
@@ -41,3 +39,19 @@ def create_project(db: Session, user: User, name: str = "testproject", descripti
     for participant in participants:
         project_repo.add_participant(project=project, participant=participant) 
     return project
+
+def create_document(
+    db: Session,
+    project: Project,
+    filename: str = "test_file.txt",
+    content: str = "Text file content.",
+    file_type: str = "text/plain"
+):
+    document_repo = DocumentRepository(db)
+    document_data = UploadedDocument(
+        filename=filename,
+        content=content.encode(),
+        content_type=file_type
+    )
+    return document_repo.create_project_document(project.id, document_data)
+
