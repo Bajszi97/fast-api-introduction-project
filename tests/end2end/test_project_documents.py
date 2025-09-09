@@ -20,7 +20,7 @@ def test_user_can_upload_document_to_their_project(
     files = make_document_request()
 
     response = client.post(
-        f"/porjects/{project.id}/documents",
+        f"/projects/{project.id}/documents",
         files=files,
         headers=headers
     )
@@ -45,7 +45,7 @@ def test_user_cannot_upload_to_another_users_project(
     files = make_document_request()
     
     response = client.post(
-        f"/porjects/{project.id}/documents",
+        f"/projects/{project.id}/documents",
         files=files,
         headers=headers
     )
@@ -67,7 +67,7 @@ def test_upload_to_non_existent_project(
     files = make_document_request()
 
     response = client.post(
-        f"/porjects/{non_existent_project_id}/documents",
+        f"/projects/{non_existent_project_id}/documents",
         files=files,
         headers=headers
     )
@@ -90,11 +90,11 @@ def test_upload_document_with_existing_name(
     files = make_document_request()
     
     # first try 
-    client.post(f"/porjects/{project.id}/documents", files=files, headers=headers)
+    client.post(f"/projects/{project.id}/documents", files=files, headers=headers)
 
     # second try
     response = client.post(
-        f"/porjects/{project.id}/documents",
+        f"/projects/{project.id}/documents",
         files=files,
         headers=headers
     )
@@ -114,7 +114,7 @@ def test_unauthenticated_user_cannot_upload_document(
     project = project_factory(user=user)
     files = make_document_request()
     
-    response = client.post(f"/porjects/{project.id}/documents", files=files) # No auth token
+    response = client.post(f"/projects/{project.id}/documents", files=files) # No auth token
 
     assert response.status_code == 401
 
