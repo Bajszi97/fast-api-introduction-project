@@ -1,37 +1,15 @@
-from dependencies import get_user_service, get_current_user, get_auth_service, get_project_service, get_document_service, load_file_stream
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
+from dependencies import get_current_user, get_project_service, get_document_service, load_file_stream
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import FileResponse
-from services import UserService, ProjectService, DocumentService
-from schemas import CreateUserRequest, UploadedDocument, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
+from services import ProjectService, DocumentService
+from schemas import UploadedDocument, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
 from models import User
 from typing import List
-from services import AuthService
+from routes import auth_router
 
 
 app = FastAPI()
-
-
-@app.post("/auth", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-async def register(user: CreateUserRequest, service: UserService = Depends(get_user_service)):
-    try:
-        return service.register_user(user)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@app.post("/login", response_model=LoginResponse)
-async def login(credentials: LoginRequest, service: AuthService = Depends(get_auth_service)):
-    try:
-        token = service.login_user(credentials)
-        return LoginResponse(
-            message="Login was succesful",
-            token=token,
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
+app.include_router(auth_router)
 
 
 @app.post("/projects", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
