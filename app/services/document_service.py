@@ -44,6 +44,9 @@ class DocumentService:
             project.id, document_id)
         if not document:
             raise LookupError("Project's document not found")
+        
+        if self.document_repo.get_project_document_by_filename(project.id, file.filename):
+            raise ValueError
 
         return self.document_repo.update_project_document(document, file)
 

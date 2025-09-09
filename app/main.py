@@ -198,8 +198,8 @@ async def update_project_document(
 ):
     try:
         return document_service.update_document_for_project(project_id, document_id, file, current_user)
-    except LookupError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    except LookupError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to upload documents to this project")
     except ValueError:
