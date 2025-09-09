@@ -224,12 +224,14 @@ class TestDocumentService:
         document = make_document()
         project_service_mock.get_project_and_check_permission.return_value = project
         document_repo_mock.get_project_document_by_id.return_value = document
+        document_repo_mock.get_project_document_by_filename.return_value = document
         document_repo_mock.update_project_document.return_value = document
 
         result = document_service.update_document_for_project(project.id, document.id, document_data, user)
 
         project_service_mock.get_project_and_check_permission.assert_called_once_with(project.id, user, Role.participant)
         document_repo_mock.get_project_document_by_id.assert_called_once_with(project.id, document.id)
+        document_repo_mock.get_project_document_by_filename.assert_called_once_with(project.id, document.filename)
         document_repo_mock.update_project_document.assert_called_once_with(document, document_data)
         assert result is document
 
