@@ -332,3 +332,155 @@ def test_user_can_download_their_project_document(
     
     assert response.status_code == 200
     assert response.content == file_content.encode()
+
+
+def test_user_can_update_their_project_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that a user can successfully update a specific document they own.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    project = project_factory(user=user)
+    document = document_factory(project=project)
+    new_filename = "new-file.txt"
+    updated_file_content = b"This is the new content of the document."
+    updated_file = make_document_request(filename=new_filename, file_content=updated_file_content)
+    
+    response = client.put(
+        f"/projects/{project.id}/documents/{document.id}",
+        files=updated_file,
+        headers=headers
+    )
+
+    assert response.status_code == 200
+    updated_doc = ProjectDocumentOut(**response.json())
+    assert updated_doc.filename == new_filename
+
+
+def test_user_cannot_update_another_users_project_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that a user cannot update a document belonging to another user.
+    """
+    owner = user_factory(username="owner")
+    non_owner = user_factory(username="non_owner")
+    headers = {"token": AuthService.get_token(non_owner)}
+    project_for_owner = project_factory(user=owner)
+    document_for_owner = document_factory(project=project_for_owner)
+    new_filename = "new-file.txt"
+    updated_file_content = b"This is the new content of the document."
+    updated_file = make_document_request(filename=new_filename, file_content=updated_file_content)
+
+    response = client.put(
+        f"/projects/{project_for_owner.id}/documents/{document_for_owner.id}",
+        files=updated_file,
+        headers=headers
+    )
+
+    assert response.status_code == 403
+
+
+def test_update_document_in_non_existent_project(
+    client: TestClient,
+    user_factory: Callable[..., User]
+):
+    """
+    Test that an attempt to update a document in a non-existent project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    non_existent_project_id = 999
+    non_existent_document_id = 1
+    new_filename = "new-file.txt"
+    updated_file_content = b"This is the new content of the document."
+    updated_file = make_document_request(filename=new_filename, file_content=updated_file_content)
+
+    response = client.put(
+        f"/projects/{non_existent_project_id}/documents/{non_existent_document_id}",
+        files=updated_file,
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_non_existent_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project]
+):
+    """
+    Test that an attempt to update a non-existent document returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    project = project_factory(user=user)
+    non_existent_document_id = 999
+    new_filename = "new-file.txt"
+    updated_file_content = b"This is the new content of the document."
+    updated_file = make_document_request(filename=new_filename, file_content=updated_file_content)
+    
+    response = client.put(
+        f"/projects/{project.id}/documents/{non_existent_document_id}",
+        files=updated_file,
+        headers=headers
+    )
+
+    assert response.status_code == 404
+
+
+def test_update_document_to_existing_name(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that an attempt to update a document to a name that already exists in the same project returns a 404.
+    """
+    user = user_factory()
+    headers = {"token": AuthService.get_token(user)}
+    project = project_factory(user=user)
+    document_to_update = document_factory(project=project, filename="original.txt")
+    existing_document = document_factory(project=project, filename="existing.txt")
+    new_filename = existing_document.filename
+    updated_file_content = b"This is the new content of the document."
+    updated_file = make_document_request(filename=new_filename, file_content=updated_file_content)
+    
+    response = client.put(
+        f"/projects/{project.id}/documents/{document_to_update.id}",
+        files=updated_file,
+        headers=headers
+    )
+    
+    assert response.status_code == 404
+
+
+def test_unauthenticated_user_cannot_update_document(
+    client: TestClient,
+    user_factory: Callable[..., User],
+    project_factory: Callable[..., Project],
+    document_factory: Callable[..., Document]
+):
+    """
+    Test that an unauthenticated user cannot update any document.
+    """
+    user = user_factory()
+    project = project_factory(user=user)
+    document = document_factory(project=project)
+    new_filename = "new-filename.txt"
+    updated_file_content = b"This is the new content of the document."
+    updated_file = make_document_request(filename=new_filename, file_content=updated_file_content)
+
+    response = client.put(f"/projects/{project.id}/documents/{document.id}", files=updated_file) # No auth token
+
+    assert response.status_code == 401
