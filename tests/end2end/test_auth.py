@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 from factories import make_register_request
 from typing import Callable

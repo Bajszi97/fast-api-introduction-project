@@ -1,5 +1,4 @@
 import typing
-import os
 from db import Base
 from datetime import datetime
 from sqlalchemy import String, TIMESTAMP, func, ForeignKey

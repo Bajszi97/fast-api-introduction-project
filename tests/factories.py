@@ -2,7 +2,7 @@ import io
 from typing import List
 from models import Project, Document, User
 from repositories import UserRepository, ProjectRepository, DocumentRepository
-from services.auth_service import AuthService
+from services import AuthService
 from schemas import CreateProjectRequest, CreateUserRequest, UploadedDocument
 from sqlalchemy.orm import Session
 

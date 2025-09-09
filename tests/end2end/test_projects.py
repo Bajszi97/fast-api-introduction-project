@@ -1,10 +1,8 @@
 from fastapi.testclient import TestClient
 from typing import Callable
-from sqlalchemy.orm import Session
-from models import User
+from models import User, Project
 from factories import make_project_request
-from models.project import Project
-from services.auth_service import AuthService
+from services import AuthService
 from schemas import ProjectOut
 
 

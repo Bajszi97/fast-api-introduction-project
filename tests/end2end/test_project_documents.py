@@ -1,12 +1,9 @@
 
 from fastapi.testclient import TestClient
 from typing import Callable
-from models import User
-from factories import make_document_request, make_project_request
-from models.document import Document
-from models.project import Project
-from services.auth_service import AuthService
-from conftest import document_factory
+from factories import make_document_request
+from models import User, Project, Document
+from services import AuthService
 from schemas import ProjectDocumentOut
 
 def test_user_can_upload_document_to_their_project(

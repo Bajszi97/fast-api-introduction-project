@@ -1,13 +1,9 @@
-import os
 from dependencies import get_user_service, get_current_user, get_auth_service, get_project_service, get_document_service, load_file_stream
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from services import UserService, ProjectService, DocumentService
-from sqlalchemy.orm import Session
-from db import get_db
 from schemas import CreateUserRequest, UploadedDocument, UserOut, LoginResponse, LoginRequest, ProjectOut, CreateProjectRequest, AddParticipantRequest, ProjectDocumentOut
-from models import User, Project, UserProject, Document
-from models.enums import Role
+from models import User
 from typing import List
 from services import AuthService
 
