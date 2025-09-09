@@ -177,7 +177,7 @@ async def download_project_document(
     try:
         document = document_service.get_project_document(project_id, document_id, current_user)
         return FileResponse(
-            path=document.path,
+            path=document_service.get_document_path(document),
             filename=document.filename,
             media_type=document.file_type
         )

@@ -1,4 +1,4 @@
-from models import User
+from models import User, Document
 from models.enums.role import Role
 from repositories import DocumentRepository
 from services import ProjectService
@@ -61,3 +61,6 @@ class DocumentService:
             raise LookupError("Project's document not found")
 
         self.document_repo.delete_project_document(document)
+    
+    def get_document_path(self, document: Document):
+        return self.document_repo.get_document_path(document)
