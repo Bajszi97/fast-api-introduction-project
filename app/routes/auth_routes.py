@@ -4,7 +4,7 @@ from dependencies import get_user_service, get_auth_service
 from schemas import CreateUserRequest, UserOut, LoginResponse, LoginRequest
 from services import UserService, AuthService
 
-auth_router = APIRouter()
+auth_router = APIRouter(tags=["Auth"])
 logger = logging.getLogger("app")
 
 @auth_router.post("/auth", response_model=UserOut, status_code=status.HTTP_201_CREATED)
