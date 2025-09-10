@@ -24,19 +24,10 @@ LOGGING_CONFIG = {
             "formatter": "default",
             "class": "logging.StreamHandler",
         },
-        "file": {
-            "level": LOG_LEVEL,
-            "formatter": "default",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": "logs/app.log",
-            "maxBytes": 1_000_000,
-            "backupCount": 10,
-            "encoding": "utf-8",
-        },
     },
     "root": {
         "level": LOG_LEVEL,
-        "handlers": ["console", "file"],
+        "handlers": ["console"],
     },
     "loggers": {
         "uvicorn": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
