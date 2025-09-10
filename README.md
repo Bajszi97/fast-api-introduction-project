@@ -1,14 +1,44 @@
-# Project
-The goal of this project is to demonstrate my software developing skills. It contains a Fast Api web application that can handle user registration and authentication, 
-managing user's projects and attaching files for them.
+# Project Overview  
+This project demonstrates my software development skills through a **FastAPI web application**.  
+The application supports **user registration and authentication**, **project management**, and **file attachment handling**.  
 
-## Tools used in the project:
-- Fast Api framework
-- SQLAlchemy & Pydantic for ORM & validation
-- Alembic for migrations
-- Docker
+## Tech Stack  
+- **FastAPI** – Web framework  
+- **SQLAlchemy** & **Pydantic** – ORM & validation  
+- **Alembic** – Database migrations  
+- **Pytest** – Unit and end-to-end testing  
+- **Docker** – Containerization  
 
-# Instalation
-1. Create a `.env` file based on `.env.example`
-2. run `docker-compose up --build`
-3. run `alembic upgrade head` inside the fast api container
+## Database Schema  
+- **users** – Registered application users  
+- **projects** – User-created projects  
+- **user_project** – Pivot table for assigning users to projects and managing roles  
+- **documents** – Metadata for project-related documents  
+
+## Architecture  
+### Routing  
+- Implemented with FastAPI routers  
+- Handles dependency injection  
+- Delegates request processing to service classes  
+- Converts service responses into HTTP responses  
+
+### Services  
+- Contain business logic  
+- Process and validate input  
+- Enforce authorization  
+- Utilize repositories for data access and modification  
+
+### Repositories  
+- Handle database and file system interactions  
+- Responsible for data retrieval and persistence  
+
+## Installation  
+1. Create a `.env` file based on `.env.example`  
+2. Build and start the services:  
+   ```bash
+   docker-compose up --build
+   ```
+3. Run database migrations inside the FastAPI container:
+   ```bash
+   alembic upgrade head
+   ```
