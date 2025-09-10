@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from routes import auth_router, project_router, document_router
+from logger import setup_logging
 
+
+setup_logging()
 
 app = FastAPI()
 
